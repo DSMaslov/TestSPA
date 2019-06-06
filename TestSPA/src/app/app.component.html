@@ -1,0 +1,37 @@
+<div style="text-align:center">
+  <h1>
+    Virtual Servers usage
+  </h1>
+</div>
+<table class="servers-table">
+  <tr>
+    <td>CurrentDateTime:</td>
+    <td>{{current | date: "dd.MM.yyyy HH:mm:ss"}}</td>
+    <td><button (click)="add()">Add</button></td>
+    <td><button (click)="selectForRemove()" [disabled]="!isAnySelected">Remove</button></td>
+  </tr>
+  <tr>
+    <td>PageLoadDateTime:</td>
+    <td>{{pageLoad | date: "dd.MM.yyyy HH:mm:ss"}}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>TotalUsageTime:</td>
+    <td>{{totalUsageTime}}</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>VirtualServerId</td>
+    <td>CreateDateTime</td>
+    <td>RemoveDateTime</td>
+    <td>SelectedForRemove</td>
+  </tr>
+  <tr *ngFor="let server of servers">
+    <td><input type="checkbox" [(ngModel)]="server.selected" [disabled]="server.selectedForRemove || server.removeDateTime">{{server.virtualServerId}}</td>
+    <td>{{server.createDateTime | date: "dd.MM.yyyy HH:mm:ss"}}</td>
+    <td>{{server.removeDateTime | date: "dd.MM.yyyy HH:mm:ss"}}</td>
+    <td>{{server.selectedForRemove ? "+" : ""}}</td>
+  </tr>
+</table>
