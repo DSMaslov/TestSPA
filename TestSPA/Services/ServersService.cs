@@ -32,8 +32,19 @@ namespace TestSPA.Services
 
             return addedServer;
         }
-        
-        public async Task SelectForRemove(int[] ids) => await _repository.SelectForRemove(ids);
 
+        public async Task SelectForRemove(int id, bool selected)
+        {
+            var changedServer = await _repository.SelectForRemove(id, selected);
+
+            await _hubContext.Clients.All.SendServerChanged(changedServer);
+        }
+
+        public async Task RemoveSelected()
+        {
+            var removedServers = await _repository.RemoveSelected();
+
+            await _hubContext.Clients.All.SendServersRemoved(removedServers);
+        }
     }
 }

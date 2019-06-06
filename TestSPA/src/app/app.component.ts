@@ -15,7 +15,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     servers: VirtualServer[];
     private timer: any;
-    private usageTime: string;
+    private usageTime: string = "00:00:00";
     private currentDateTime: Date = new Date();
     private pageLoadDateTime: Date = new Date();
     private hubConnection: HubConnection;
@@ -28,6 +28,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.serversService.getServers()
             .subscribe(result => {
                 this.servers = result;
+                this.reorderServers();
                 this.calculateUsageTime();
             });
 
@@ -42,8 +43,30 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.hubConnection.start().catch(err => console.error(err.toString()));
 
-        this.hubConnection.on('SendServerAdded', (srv: VirtualServer) => {
-            this.appendServer(srv);
+        this.hubConnection.on('SendServerAdded', (server: VirtualServer) => {
+            this.servers.push(server);
+            this.reorderServers();
+        });
+
+        this.hubConnection.on('SendServerChanged', (s: VirtualServer) => {
+            let server = this.servers.find(ss => ss.virtualServerId == s.virtualServerId);
+            if (server) {
+                _.merge(server, s);
+            }
+        });
+
+        this.hubConnection.on('SendServersRemoved', (servers: VirtualServer[]) => {
+            servers.forEach(s => {
+                let server = this.servers.find(ss => ss.virtualServerId == s.virtualServerId);
+                if (server) {
+                    _.merge(server, s);
+                }
+                else {
+                    this.servers.push(s);
+                }
+            });
+
+            this.reorderServers();
         });
     }
 
@@ -70,30 +93,30 @@ export class AppComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
-    selectForRemove() {
-        let ids = this.servers.filter(s => s.selected).map(s => s.virtualServerId);
-
-        this.serversService.selectForRemove(ids)
-            .subscribe(() => {
-                this.servers.filter(s => s.selected).forEach(s => { s.selected = false; s.selectedForRemove = true; });
-            });
+    selectForRemove(data: VirtualServer) {
+        this.serversService.selectForRemove(data.virtualServerId, data.selectedForRemove)
+            .subscribe();
     }
 
-    get isAnySelected(): boolean {
-        return _.some(this.servers, s => s.selected);
+    removeSelected() {
+        this.serversService.removeSelected()
+            .subscribe();
     }
 
-    private appendServer(srv: VirtualServer) {
-        this.servers = _.orderBy(this.servers.concat([srv]), s => s.createDateTime);
+    get isAnySelectedForRemove(): boolean {
+        return _.some(this.servers, s => s.selectedForRemove);
+    }
+
+    private reorderServers() {
+        this.servers = _.orderBy(this.servers, s => s.createDateTime);
     }
 
     private calculateUsageTime() {
         if (this.servers) {
-            let min = _.minBy(this.servers, s => s.createDateTime);
+            // суммируем все продолжительности периодов использования серверов. Если еще не удален -- то считаем текущей датой
+            var time = _.sumBy(this.servers, s => moment(s.removeDateTime || new Date()).valueOf() - moment(s.createDateTime).valueOf());
 
-            if (min) {
-                this.usageTime = this.getDuration(min.createDateTime, new Date());
-            }
+            this.usageTime = this.getDuration(time);
         }
     }
 
@@ -101,8 +124,8 @@ export class AppComponent implements OnInit, OnDestroy {
         return time <= 9 ? `0${time}` : time;
     }
 
-    private getDuration(start: Date, end: Date) {
-        let time = moment(end).valueOf() - moment(start).valueOf();
+    private getDuration(time: number) {
+        time = time || 0;
         let seconds = Math.floor(time / 1000 % 60);
         let minutes = Math.floor(time / 1000 / 60 % 60);
         let hours = Math.floor(time / (1000 * 60 * 60));

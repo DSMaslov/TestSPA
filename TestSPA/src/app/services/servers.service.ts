@@ -21,8 +21,12 @@ export class ServersService {
         return this.http.post<VirtualServer>("api/servers/add", null);
     }
 
-    selectForRemove(ids: number[]): Observable<any> {
-        return this.http.post<any>("api/servers/selectForRemove", ids);
+    selectForRemove(id: number, selected: boolean): Observable<any> {
+        return this.http.post<any>(`api/servers/selectForRemove?id=${id}&selected=${selected}`, null);
+    }
+
+    removeSelected(): Observable<any> {
+        return this.http.post<any>("api/servers/removeSelected", null);
     }
 }
 

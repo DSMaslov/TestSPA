@@ -48,13 +48,29 @@ namespace TestSPA.Repositories
             }
         }
         
-        public async Task SelectForRemove(int[] ids)
+        public async Task<VirtualServer> SelectForRemove(int id, bool selected)
         {
             using (var db = new SqlConnection(_connectionString))
             {
-                var query = $@"UPDATE VirtualServers SET SelectedForRemove = @True Where VirtualServerId in @Ids";
+                var query = $@"UPDATE VirtualServers
+                            SET SelectedForRemove = @Selected
+                            OUTPUT inserted.VirtualServerId, inserted.CreateDateTime, inserted.RemoveDateTime, inserted.SelectedForRemove
+                            Where VirtualServerId = @Id";
 
-                await db.ExecuteAsync(query, new { Ids = ids, True = true });
+                return (await db.QueryAsync<VirtualServer>(query, new { Id = id, Selected = selected })).FirstOrDefault();
+            }
+        }
+
+        public async Task<IEnumerable<VirtualServer>> RemoveSelected()
+        {
+            using (var db = new SqlConnection(_connectionString))
+            {
+                var query = $@"UPDATE VirtualServers
+                            SET SelectedForRemove = @False, RemoveDateTime = @RemoveDateTime
+                            OUTPUT inserted.VirtualServerId, inserted.CreateDateTime, inserted.RemoveDateTime, inserted.SelectedForRemove
+                            Where SelectedForRemove = @True";
+
+                return await db.QueryAsync<VirtualServer>(query, new { False = false, True = true, RemoveDateTime = DateTime.Now });
             }
         }
     }

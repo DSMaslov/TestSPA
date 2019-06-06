@@ -10,6 +10,7 @@ namespace TestSPA.Hubs
     public interface IServersHub
     {
         Task SendServerAdded(VirtualServer server);
+        Task SendServerChanged(VirtualServer server);
         Task SendServersRemoved(IEnumerable<VirtualServer> servers);
     }
 }

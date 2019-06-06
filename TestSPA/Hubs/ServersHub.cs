@@ -14,6 +14,11 @@ namespace TestSPA.Hubs
             await Clients.All.SendServerAdded(server);
         }
 
+        public async Task ServerChanged(VirtualServer server)
+        {
+            await Clients.All.SendServerChanged(server);
+        }
+
         public async Task ServersRemoved(IEnumerable<VirtualServer> servers)
         {
             await Clients.All.SendServersRemoved(servers);

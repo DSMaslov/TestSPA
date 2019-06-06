@@ -28,8 +28,11 @@ namespace TestSPA.Controllers
         
         [HttpPost("add")]
         public async Task<VirtualServer> Add() => await _serversService.AddVirtualServer();
-        
+
         [HttpPost("selectForRemove")]
-        public async Task SelectForRemove([FromBody]int[] ids) => await _serversService.SelectForRemove(ids);
+        public async Task SelectForRemove([FromQuery]int id, [FromQuery]bool selected) => await _serversService.SelectForRemove(id, selected);
+
+        [HttpPost("removeSelected")]
+        public async Task RemoveSelected() => await _serversService.RemoveSelected();
     }
 }
