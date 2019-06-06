@@ -34,7 +34,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.timer = setInterval(() => {
             this.calculateUsageTime();
-            this.currentDateTime = new Date();
+            this.currentDateTime = this.now;
         }, 1000); // every second
 
         this.hubConnection = new signalR.HubConnectionBuilder()
@@ -107,16 +107,40 @@ export class AppComponent implements OnInit, OnDestroy {
         return _.some(this.servers, s => s.selectedForRemove);
     }
 
+    private get now() {
+        return new Date();
+    }
+
     private reorderServers() {
         this.servers = _.orderBy(this.servers, s => s.createDateTime);
     }
 
     private calculateUsageTime() {
-        if (this.servers) {
-            // суммируем все продолжительности периодов использования серверов. Если еще не удален -- то считаем текущей датой
-            var time = _.sumBy(this.servers, s => moment(s.removeDateTime || new Date()).valueOf() - moment(s.createDateTime).valueOf());
+        if (this.servers && this.servers.length > 0) {
+            let servers: VirtualServer[] = _.orderBy(this.servers, s => s.createDateTime);
+            let prev = servers[0];
+            let start = this.getStart(prev);
+            let end = this.getEnd(prev);
+            let time = 0;
 
-            this.usageTime = this.getDuration(time);
+            for (let i = 1; i < servers.length; i++) {
+                let next = servers[i];
+                // если дата создания сервер больше, чем период -- сохраняем продолжительность
+                if (this.getStart(next) > end) {
+                    time += end - start;
+                    start = this.getStart(next);
+                    end = this.getEnd(next);
+                }
+                // иначе, если дата закрытия больше, чем конец периода -- сдвигаем дату закрытия
+                else if (this.getEnd(next) > end) {
+                    end = this.getEnd(next);
+                }
+
+                prev = next;
+            }
+
+            time += end - start;
+            this.usageTime = this.getDurationString(time);
         }
     }
 
@@ -124,7 +148,15 @@ export class AppComponent implements OnInit, OnDestroy {
         return time <= 9 ? `0${time}` : time;
     }
 
-    private getDuration(time: number) {
+    private getStart(server: VirtualServer): number {
+        return moment(server.createDateTime).valueOf();
+    }
+
+    private getEnd(server: VirtualServer): number {
+        return moment(server.removeDateTime || this.now).valueOf();
+    }
+    
+    private getDurationString(time: number): string {
         time = time || 0;
         let seconds = Math.floor(time / 1000 % 60);
         let minutes = Math.floor(time / 1000 / 60 % 60);
