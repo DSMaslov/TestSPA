@@ -3,6 +3,8 @@ import { ServersService } from './services/servers.service';
 import { VirtualServer } from './models/virtualServer';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { HubConnection } from '@aspnet/signalr';
+import * as signalR from '@aspnet/signalr';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +18,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private usageTime: string;
     private currentDateTime: Date = new Date();
     private pageLoadDateTime: Date = new Date();
+    private hubConnection: HubConnection;
 
     constructor(private serversService: ServersService) {
 
@@ -33,6 +36,15 @@ export class AppComponent implements OnInit, OnDestroy {
             this.currentDateTime = new Date();
         }, 1000); // every second
 
+        this.hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/api/serversHub")
+            .build();
+
+        this.hubConnection.start().catch(err => console.error(err.toString()));
+
+        this.hubConnection.on('SendServerAdded', (srv: VirtualServer) => {
+            this.appendServer(srv);
+        });
     }
 
     ngOnDestroy() {
@@ -55,7 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     add() {
         this.serversService.addServer()
-            .subscribe(srv => this.appendServer(srv));
+            .subscribe();
     }
 
     selectForRemove() {

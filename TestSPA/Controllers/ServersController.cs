@@ -1,10 +1,9 @@
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using TestSPA.Models;
-using TestSPA.Repositories;
+using TestSPA.Services;
 
 namespace TestSPA.Controllers
 {
@@ -13,38 +12,24 @@ namespace TestSPA.Controllers
     [ApiController]
     public class ServersController : ControllerBase
     {
-        private readonly ServersRepository _repository;
+        private readonly ServersService _serversService;
 
-        public ServersController(ServersRepository repository)
+        public ServersController(ServersService serversService)
         {
-            _repository = repository;
+            _serversService = serversService;
         }
 
         [HttpGet]
         [HttpGet("list")]
-        public async Task<IEnumerable<VirtualServer>> List()
-        {
-            return await _repository.GetVirtualServers();
-        }
-
+        public async Task<IEnumerable<VirtualServer>> List() => await _serversService.GetVirtualServers();
+        
         [HttpGet("{id}")]
-        public async Task<VirtualServer> Get(int id)
-        {
-            return await _repository.GetVirtualServer(id);
-        }
-
+        public async Task<VirtualServer> Get(int id) => await _serversService.GetVirtualServer(id);
+        
         [HttpPost("add")]
-        public async Task<VirtualServer> Add()
-        {
-            var newServer = new VirtualServer { CreateDateTime = DateTime.Now };
-
-            return await _repository.AddVirtualServer(newServer);
-        }
-
+        public async Task<VirtualServer> Add() => await _serversService.AddVirtualServer();
+        
         [HttpPost("selectForRemove")]
-        public async Task SelectForRemove([FromBody]int[] ids)
-        {
-            await _repository.SelectForRemove(ids);
-        }
+        public async Task SelectForRemove([FromBody]int[] ids) => await _serversService.SelectForRemove(ids);
     }
 }

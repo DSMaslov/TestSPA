@@ -12,8 +12,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using TestSPA.Hubs;
 using TestSPA.Middleware;
 using TestSPA.Repositories;
+using TestSPA.Services;
 
 namespace TestSPA
 {
@@ -46,6 +48,9 @@ namespace TestSPA
             var connectionString = Configuration.GetConnectionString("TestSPA");
 
             services.AddScoped(provider => new ServersRepository(connectionString));
+            services.AddScoped<ServersService>();
+            
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -71,6 +76,11 @@ namespace TestSPA
             app.UseStaticFiles();
 
             app.UseMiddleware<ExceptionMiddleware>();
+
+            app.UseSignalR(builder =>
+            {
+                builder.MapHub<ServersHub>("/api/serversHub");
+            });
 
             app.UseMvc();
         }
