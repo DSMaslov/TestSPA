@@ -1,27 +1,59 @@
 # TestSpa
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.1.5.
+Проект для тестового задания https://ruvds.com 
 
-## Development server
+Описание задания в файле task.pdf
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+## Сборка
 
-## Code scaffolding
+1. Установить [dotnet core sdk](https://dotnet.microsoft.com/download/dotnet-core/2.2)
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+2. Установить [npm](https://www.npmjs.com/)
 
-## Build
+3. Загрузить nuGet пакеты (в папке с проектом выполнить dotnet restore)
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+4. Загрузить npm пакеты  (в папке с проектом выполнить npm install)
 
-## Running unit tests
+5. Собрать backend часть проекта (в папке с проектом выполнить dotnet build)
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Артефакты сборки будут располагаться в папке bin\Debug\netcoreapp2.2
 
-## Running end-to-end tests
+6. Собрать frontend часть проекта (в папке с проектом выполнить ng build)
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+Артефакты сборки будут располагаться в папке wwwroot
 
-## Further help
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+## Запуск
+
+1. Создать БД MS SQL Server (2012 или выше). В созданной БД выполнить скрипт initial.sql из корня проекта
+
+2. В файл appsettings.json прописать корректную строку подключения для созданной БД
+
+3. Открыть проект в Visual Studio и нажать ctrl+F5 (откроется страница браузера http://localhost:51527)
+
+ИЛИ
+
+3. Создать сайт в IIS. Application Pool - без управляемого кода. Путь к сайту -- папка wwwroot проекта
+
+
+## Описание решения
+
+1. Решение представляет собой одностраничный сайт с таблицей серверов, возможностью добавить сервер, пометить сервер на удаление и удалить помеченные сервера.
+
+Так же отображаются текущее время, время загрузки страницы и используемое время серверов.
+
+На сайте используется клиент-серверная и сервер-клиенты (signalR) архитектура. 
+
+Фронтед сайта сделан на Angular 6. Бэкенд на Asp.Net Core 2.2
+
+2. При нажатии кнопки Add добавляется новая запись в таблицу БД. Все клиенты, у которых открыта страница получают сообщение о новой добавленной записи.
+
+При нажатии на checkbox обновляется запись в таблице и проставляется флаг SelectedForRemove. Все клиенты, у которых открыта страница получают сообщение об изменении записи.
+
+При повторном нажатии на checkbox обновляется запись в таблице и снимается флаг SelectedForRemove. Все клиенты, у которых открыта страница получают сообщение об изменении записи.
+
+Поставить или снять флаг можно только у записей, у которых пустое поле RemoveDateTime (сервера еще не удалены)
+
+При нажатии кнопки Remove всем записям с флагом SelectedForRemove проставляется дата/время удаления (RemoveDateTime) и снимается флаг SelectedForRemove. Все клиенты, у которых открыта страница получают сообщение об изменении записей.
+
+Время использования серверов (TotalUsageTime) вычисляется как время прошедшее с момента создания сервера и до момента его удаления. Если удаления еще не было то считается по текущее время. На странице запущен таймер, который каждую секунду высчитывает время использования и отображает результат в реальном времени.
